@@ -20,6 +20,8 @@ from logger import Logger
 from replay_buffer import ReplayBufferStorage, make_replay_loader
 from video import TrainVideoRecorder, VideoRecorder
 
+import wandb
+
 torch.backends.cudnn.benchmark = True
 
 
@@ -62,7 +64,6 @@ class Workspace:
         if cfg.snapshot_ts > 0:
             pretrained_agent = self.load_snapshot()['agent']
             self.agent.init_from(pretrained_agent)
-
         # get meta specs
         meta_specs = self.agent.get_meta_specs()
         # create replay buffer
@@ -227,30 +228,46 @@ class Workspace:
             snapshot = snapshot_dir / str(
                 seed) / f'snapshot_{self.cfg.snapshot_ts}.pt'
             if not snapshot.exists():
-                return None
+                raise Exception(f"Can't find snapshot: {snapshot}")
             with snapshot.open('rb') as f:
                 payload = torch.load(f)
             return payload
 
         # try to load current seed
-        payload = try_load(self.cfg.seed)
+        payload = try_load(self.cfg.pt_seed)
         if payload is not None:
             return payload
         # otherwise try random seed
-        while True:
-            seed = np.random.randint(1, 11)
-            payload = try_load(seed)
-            if payload is not None:
-                return payload
-        return None
+        # while True:
+        #     seed = np.random.randint(1, 11)
+        #     payload = try_load(seed)
+        #     if payload is not None:
+        #         return payload
+        # return None
 
 
 @hydra.main(config_path='.', config_name='finetune')
 def main(cfg):
+    if cfg.use_wandb:
+        import omegaconf
+        exp_name = '_'.join([
+            cfg.experiment, cfg.agent.name, cfg.obs_type,
+            str(cfg.seed)
+        ])
+        config = omegaconf.OmegaConf.to_container(
+        cfg, resolve=True, throw_on_missing=False)
+        ## To play nice with WandB sweep overrides
+        config["agent.details"] = config["agent"]
+        del config["agent"]
+        print(config)
+        wandb.init(project="urlb", group=cfg.agent.name, name=exp_name, config=config)
+    
+
     from finetune import Workspace as W
     root_dir = Path.cwd()
     workspace = W(cfg)
     snapshot = root_dir / 'snapshot.pt'
+    print(snapshot)
     if snapshot.exists():
         print(f'resuming: {snapshot}')
         workspace.load_snapshot()

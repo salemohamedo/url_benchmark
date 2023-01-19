@@ -1,0 +1,20 @@
+wandb_version: 1
+
+action_repeat:
+  value: 2
+agent:
+  value: icm_apt
+batch_size:
+  value: 256
+num_train_frames:
+  value: 200010
+obs_type:
+  value: pixels
+pt_seed:
+  value: 1
+seed:
+  value: 3
+snapshot_ts:
+  value: 100000
+task:
+  value: walker_walk

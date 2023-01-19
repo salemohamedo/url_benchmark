@@ -43,13 +43,13 @@ class Workspace:
         utils.set_seed_everywhere(cfg.seed)
         self.device = torch.device(cfg.device)
 
-        # create logger
-        if cfg.use_wandb:
-            exp_name = '_'.join([
-                cfg.experiment, cfg.agent.name, cfg.domain, cfg.obs_type,
-                str(cfg.seed)
-            ])
-            wandb.init(project="urlb", group=cfg.agent.name, name=exp_name)
+        # # create logger
+        # if cfg.use_wandb:
+        #     exp_name = '_'.join([
+        #         cfg.experiment, cfg.agent.name, cfg.domain, cfg.obs_type,
+        #         str(cfg.seed)
+        #     ])
+        #     wandb.init(project="urlb", group=cfg.agent.name, name=exp_name)
 
         self.logger = Logger(self.work_dir,
                              use_tb=cfg.use_tb,
@@ -220,6 +220,10 @@ class Workspace:
             self._global_step += 1
 
     def save_snapshot(self):
+        import torch.nn.utils.parametrize as parametrize
+        for c in self.agent.modules():
+            try: parametrize.remove_parametrizations(c, 'weight')
+            except: pass
         snapshot_dir = self.work_dir / Path(self.cfg.snapshot_dir)
         snapshot_dir.mkdir(exist_ok=True, parents=True)
         snapshot = snapshot_dir / f'snapshot_{self.global_frame}.pt'
@@ -231,6 +235,20 @@ class Workspace:
 
 @hydra.main(config_path='.', config_name='pretrain')
 def main(cfg):
+    if cfg.use_wandb:
+        import omegaconf
+        exp_name = '_'.join([
+            cfg.experiment, cfg.agent.name, cfg.obs_type,
+            str(cfg.seed)
+        ])
+        config = omegaconf.OmegaConf.to_container(
+        cfg, resolve=True, throw_on_missing=False)
+        ## To play nice with WandB sweep overrides
+        config["agent.details"] = config["agent"]
+        del config["agent"]
+        print(config)
+        wandb.init(project="urlb", group=cfg.agent.name, name=exp_name, config=config)
+    
     from pretrain import Workspace as W
     root_dir = Path.cwd()
     workspace = W(cfg)

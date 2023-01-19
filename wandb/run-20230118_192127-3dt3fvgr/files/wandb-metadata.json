@@ -1,0 +1,33 @@
+{
+    "os": "Linux-4.15.0-194-generic-x86_64-with-glibc2.17",
+    "python": "3.8.15",
+    "heartbeatAt": "2023-01-19T00:21:31.716897",
+    "startedAt": "2023-01-19T00:21:27.003521",
+    "docker": null,
+    "gpu": "Quadro RTX 8000",
+    "gpu_count": 1,
+    "cpu_count": 64,
+    "cuda": null,
+    "args": [
+        "action_repeat=2",
+        "agent=hyper_icm_apt",
+        "batch_size=256",
+        "num_train_frames=200010",
+        "obs_type=pixels",
+        "pt_seed=1",
+        "seed=1",
+        "snapshot_ts=100000",
+        "task=walker_run"
+    ],
+    "state": "running",
+    "program": "<python with no main file>",
+    "git": {
+        "remote": "https://github.com/salemohamedo/url_benchmark.git",
+        "commit": "bb98f0c6d78b3c467fb5a9fa5bbba3b7c0250397"
+    },
+    "email": "omar.salemohamed@gmail.com",
+    "root": "/home/mila/o/omar.salemohamed/url_benchmark",
+    "host": "cn-c023",
+    "username": "omar.salemohamed",
+    "executable": "/home/mila/o/omar.salemohamed/.conda/envs/urlb/bin/python"
+}

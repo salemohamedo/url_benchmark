@@ -1,0 +1,27 @@
+program: finetune.py
+command:
+  - ${env}
+  - ${interpreter}
+  - ${program}
+  - ${args_no_hyphens}
+
+method: grid
+parameters:
+  agent:
+    values: [rnd, hyper_rnd, icm_apt, hyper_icm_apt, hyper_ddpg_rnd]
+  task:
+    values: [walker_stand, walker_walk, walker_run, walker_flip]
+  snapshot_ts:
+    value: 100000
+  obs_type:
+    value: pixels
+  action_repeat:
+    value: 2
+  batch_size:
+    value: 256
+  num_train_frames:
+    value: 200010
+  seed:
+    values: [1, 2, 3]
+  pt_seed:
+    values: [1]

@@ -1,12 +1,12 @@
 defaults:
-  - agent: ddpg
+  - agent: hyper_ddpg
   - override hydra/launcher: submitit_local
 
 # mode
 reward_free: false
 # task settings
-task: walker_stand
-obs_type: states # [states, pixels]
+task: walker_walk
+obs_type: pixels # [states, pixels]
 frame_stack: 3 # only works if obs_type=pixels
 action_repeat: 1 # set to 2 for pixels
 discount: 0.99
@@ -17,8 +17,8 @@ num_seed_frames: 4000
 eval_every_frames: 10000
 num_eval_episodes: 10
 # pretrained
-snapshot_ts: 100000
-snapshot_base_dir: ./pretrained_models
+snapshot_ts: 0
+snapshot_base_dir: ../../../models
 # replay buffer
 replay_buffer_size: 1000000
 replay_buffer_num_workers: 4
@@ -27,11 +27,12 @@ nstep: ${agent.nstep}
 update_encoder: false # can be either true or false depending if we want to fine-tune encoder
 # misc
 seed: 1
+pt_seed: 1
 device: cuda
 save_video: true
 save_train_video: false
-use_tb: false
-use_wandb: false
+use_tb: true
+use_wandb: true
 # experiment
 experiment: exp
 
