@@ -8,6 +8,35 @@ from torch.nn.utils.parametrizations import spectral_norm
 """
     Taken from https://github.com/twitter-research/hyperbolic-rl
 """
+
+class PoincareDist:
+    def __init__(self, c=1.0, project_input=True, euclidean_inputs=True):
+        self.project_input = project_input
+        self.euclidean_inputs = euclidean_inputs
+        self.ball = geoopt.PoincareBall(c)
+    
+    def map_to_ball(self, input):
+        return self.ball.expmap0(input, project=self.project_input)
+
+    def manual_distance(self, points, other_points):
+        dist = torch.arccosh(1 + 2 * (points - other_points).pow(2).sum(-1) / (1 - points.pow(2).sum(-1)) / (
+                    1 - other_points.pow(2).sum(-1)))
+        return dist
+
+    def distance(self, x, y):
+        if self.euclidean_inputs:
+            x = self.map_to_ball(x)
+            y = self.map_to_ball(y)
+        return self.manual_distance(x, y)
+
+    def distance_matrix(self, input):
+        if self.euclidean_inputs:
+            input = self.map_to_ball(input)
+        input = input[:, None, :]
+        distances = self.manual_distance(input.unsqueeze(0), input.unsqueeze(1))
+        return distances.sum(-1)
+
+
 class PoincarePlaneDistance(torch.nn.Module):
     def __init__(
             self,

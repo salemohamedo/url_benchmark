@@ -5,13 +5,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 import utils
-from agent.hyper_ddpg import HyperDDPGAgent
-from agent.hyper_utils import PoincarePlaneDistance, ClipNorm, final_weight_init_hyp_small, apply_sn, PoincareDist
-
-max_euclidean_norm = 60
-dimensions_per_space = 32
-hyperbolic_layer_kwargs = dict(rescale_euclidean_norms_gain=1.0, rescale_normal_params=True, effective_softmax_rescale=0.5)
-
+from agent.ddpg import DDPGAgent
+from agent.hyper_utils import PoincareDist
 
 class ICM(nn.Module):
     """
@@ -22,43 +17,15 @@ class ICM(nn.Module):
         self.trunk = nn.Sequential(nn.Linear(obs_dim, icm_rep_dim),
                                    nn.LayerNorm(icm_rep_dim), nn.Tanh())
 
-        self.forward_net = [
+        self.forward_net = nn.Sequential(
             nn.Linear(icm_rep_dim + action_dim, hidden_dim), nn.ReLU(),
-            # nn.Linear(hidden_dim, icm_rep_dim)
-        ]
+            nn.Linear(hidden_dim, icm_rep_dim))
 
-        self.backward_net = [
+        self.backward_net = nn.Sequential(
             nn.Linear(2 * icm_rep_dim, hidden_dim), nn.ReLU(),
-            # nn.Linear(hidden_dim, action_dim), nn.Tanh()
-        ]
-
-        self.forward_net += [
-            ClipNorm(max_norm=max_euclidean_norm,
-            dimensions_per_space=dimensions_per_space),
-            PoincarePlaneDistance(in_features=hidden_dim, 
-            num_planes=icm_rep_dim,
-            dimensions_per_space=dimensions_per_space,
-            **hyperbolic_layer_kwargs),
-        ]
-
-        self.backward_net += [
-            ClipNorm(max_norm=max_euclidean_norm,
-            dimensions_per_space=dimensions_per_space),
-            PoincarePlaneDistance(in_features=hidden_dim, 
-            num_planes=action_dim,
-            dimensions_per_space=dimensions_per_space,
-            **hyperbolic_layer_kwargs),
-            nn.Tanh()
-        ]
-        
-        self.forward_net = nn.Sequential(*self.forward_net)
-        self.backward_net = nn.Sequential(*self.backward_net)
+            nn.Linear(hidden_dim, action_dim), nn.Tanh())
 
         self.apply(utils.weight_init)
-
-        final_weight_init_hyp_small(self.forward_net[-1])
-        final_weight_init_hyp_small(self.backward_net[-2])
-
 
     def forward(self, obs, action, next_obs):
         assert obs.shape[0] == next_obs.shape[0]
@@ -85,7 +52,7 @@ class ICM(nn.Module):
         return rep
 
 
-class HyperICMAPTAgent(HyperDDPGAgent):
+class HyperDistICMAPTAgent(DDPGAgent):
     def __init__(self, icm_scale, knn_rms, knn_k, knn_avg, knn_clip,
                  update_encoder, icm_rep_dim, **kwargs):
         super().__init__(**kwargs)
@@ -105,9 +72,7 @@ class HyperICMAPTAgent(HyperDDPGAgent):
         rms = utils.RMS(self.device)
         self.pbe = utils.PBE(rms, knn_clip, knn_k, knn_avg, knn_rms,
                              self.device)
-        self.hyper_dist_fn = PoincareDist(c=1, euclidean_inputs=False).distance_matrix
-        for m in self.modules():
-            apply_sn(m)
+        self.hyper_dist_fn = PoincareDist(c=1, euclidean_inputs=True).distance_matrix
 
     def update_icm(self, obs, action, next_obs, step):
         metrics = dict()
@@ -131,7 +96,7 @@ class HyperICMAPTAgent(HyperDDPGAgent):
 
     def compute_intr_reward(self, obs, action, next_obs, step):
         rep = self.icm.get_rep(obs, action)
-        reward = self.pbe(rep, self.hyper_dist_fn)
+        reward = self.pbe(rep, hyper_dist_fn=self.hyper_dist_fn)
         reward = reward.reshape(-1, 1)
         return reward
 

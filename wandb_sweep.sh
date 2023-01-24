@@ -16,4 +16,6 @@ conda activate urlb
 
 unset CUDA_VISIBLE_DEVICES
 
-wandb agent omar-s/url_benchmark/fq1gk59g
+# wandb agent omar-s/url_benchmark/8osmn1tn
+# wandb agent omar-s/url_benchmark/dpxxw2mx
+wandb agent omar-s/url_benchmark/l88ybjdt

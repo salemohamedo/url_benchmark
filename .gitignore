@@ -164,3 +164,11 @@ models/
 .vscode
 
 wandb
+
+ft_wandb_sweep.sh
+wandb_sweep.sh
+plots.ipynb
+saved_dfs/
+test.sh
+slurm.sh
+EXPERIMENTS.md

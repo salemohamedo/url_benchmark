@@ -247,6 +247,7 @@ def main(cfg):
         config["agent.details"] = config["agent"]
         del config["agent"]
         print(config)
+        config['SLURM_JOB_ID'] = os.getenv('SLURM_JOB_ID')
         wandb.init(project="urlb", group=cfg.agent.name, name=exp_name, config=config)
     
     from pretrain import Workspace as W

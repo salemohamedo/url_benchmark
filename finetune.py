@@ -250,6 +250,7 @@ class Workspace:
 def main(cfg):
     if cfg.use_wandb:
         import omegaconf
+        cfg.seed = cfg.pt_seed
         exp_name = '_'.join([
             cfg.experiment, cfg.agent.name, cfg.obs_type,
             str(cfg.seed)
@@ -260,6 +261,7 @@ def main(cfg):
         config["agent.details"] = config["agent"]
         del config["agent"]
         print(config)
+        config['SLURM_JOB_ID'] = os.getenv('SLURM_JOB_ID')
         wandb.init(project="urlb", group=cfg.agent.name, name=exp_name, config=config)
     
 

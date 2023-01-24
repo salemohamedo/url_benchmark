@@ -8,8 +8,8 @@ import torch.nn.functional as F
 
 import utils
 from agent.ddpg import DDPGAgent
-from agent.hyper_utils import PoincarePlaneDistance, ClipNorm, apply_sn_until_instance, final_weight_init_hyp_small, PoincareDist
-from radam import RiemannianAdam
+from agent.hyper_utils import PoincareDist
+
 
 class RND(nn.Module):
     def __init__(self,
@@ -30,47 +30,23 @@ class RND(nn.Module):
         else:
             self.normalize_obs = nn.BatchNorm1d(obs_shape[0], affine=False)
 
-        max_euclidean_norm = 60
-        dimensions_per_space = 32
-        hyperbolic_layer_kwargs = dict(rescale_euclidean_norms_gain=1.0, rescale_normal_params=True, effective_softmax_rescale=0.5)
-
-        self.predictor = [encoder, nn.Linear(obs_dim, hidden_dim),
+        self.predictor = nn.Sequential(encoder, nn.Linear(obs_dim, hidden_dim),
                                        nn.ReLU(),
                                        nn.Linear(hidden_dim, hidden_dim),
                                        nn.ReLU(),
-                                    #    nn.Linear(hidden_dim, rnd_rep_dim),
-                                    ClipNorm(max_norm=max_euclidean_norm,
-                          dimensions_per_space=dimensions_per_space),
-            PoincarePlaneDistance(in_features=hidden_dim, 
-            num_planes=rnd_rep_dim,
-            dimensions_per_space=dimensions_per_space,
-            **hyperbolic_layer_kwargs)
-                                       ]
-        self.target = [copy.deepcopy(encoder),
+                                       nn.Linear(hidden_dim, rnd_rep_dim))
+        self.target = nn.Sequential(copy.deepcopy(encoder),
                                     nn.Linear(obs_dim, hidden_dim), nn.ReLU(),
                                     nn.Linear(hidden_dim, hidden_dim),
                                     nn.ReLU(),
-                                    # nn.Linear(hidden_dim, rnd_rep_dim),
-                                    ClipNorm(max_norm=max_euclidean_norm,
-                                    dimensions_per_space=dimensions_per_space),
-                                    PoincarePlaneDistance(in_features=hidden_dim, 
-                                    num_planes=rnd_rep_dim,
-                                    dimensions_per_space=dimensions_per_space,
-                                    **hyperbolic_layer_kwargs),
-                                    ]
-        self.apply(utils.weight_init)
-        apply_sn_until_instance(self.predictor, PoincarePlaneDistance)
-        apply_sn_until_instance(self.target, PoincarePlaneDistance)
-        final_weight_init_hyp_small(self.predictor[-1])
-        final_weight_init_hyp_small(self.target[-1])
-        
-        self.predictor = nn.Sequential(*self.predictor)
-        self.target = nn.Sequential(*self.target)
+                                    nn.Linear(hidden_dim, rnd_rep_dim))
 
-        self.hyper_dist = PoincareDist(c=1, euclidean_inputs=False)
+        self.hyper_dist = PoincareDist(c=1, euclidean_inputs=True)
 
         for param in self.target.parameters():
             param.requires_grad = False
+
+        self.apply(utils.weight_init)
 
     def forward(self, obs):
         obs = self.aug(obs)
@@ -85,7 +61,7 @@ class RND(nn.Module):
         return prediction_error
 
 
-class HyperRNDAgent(DDPGAgent):
+class HyperDistRNDAgent(DDPGAgent):
     def __init__(self, rnd_rep_dim, update_encoder, rnd_scale=1., **kwargs):
         super().__init__(**kwargs)
         self.rnd_scale = rnd_scale
@@ -97,8 +73,7 @@ class HyperRNDAgent(DDPGAgent):
         self.intrinsic_reward_rms = utils.RMS(device=self.device)
 
         # optimizers
-        # self.rnd_opt = torch.optim.Adam(self.rnd.parameters(), lr=self.lr)
-        self.rnd_opt = RiemannianAdam(self.rnd.parameters(), lr=self.lr)
+        self.rnd_opt = torch.optim.Adam(self.rnd.parameters(), lr=self.lr)
 
         self.rnd.train()
 

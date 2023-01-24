@@ -1,4 +1,4 @@
-program: finetune.py
+program: pretrain.py
 command:
   - ${env}
   - ${interpreter}
@@ -9,10 +9,8 @@ method: grid
 parameters:
   agent:
     values: [hyper_icm_apt] #[rnd, hyper_rnd, icm_apt, hyper_icm_apt, hyper_ddpg_rnd]
-  task:
-    values: [walker_stand, walker_walk, walker_run, walker_flip, jaco_reach_top_left, jaco_reach_top_right, jaco_reach_bottom_left, jaco_reach_bottom_right, quadruped_walk, quadruped_run, quadruped_stand, quadruped_jump]
-  snapshot_ts:
-    value: 0
+  domain:
+    values: [walker, jaco, quadruped] 
   obs_type:
     value: pixels
   action_repeat:
@@ -20,10 +18,8 @@ parameters:
   batch_size:
     value: 256
   num_train_frames:
-    value: 200010
-  # seed:
-  #   values: [1] 
-  pt_seed:
+    value: 100010
+  seed:
     values: [1, 2, 3]
   save_video:
     value: false

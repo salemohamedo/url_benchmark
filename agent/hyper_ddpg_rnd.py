@@ -8,7 +8,7 @@ import torch.nn.functional as F
 
 import utils
 from agent.hyper_ddpg import HyperDDPGAgent
-from agent.hyper_utils import PoincarePlaneDistance, ClipNorm, apply_sn_until_instance, final_weight_init_hyp_small, apply_sn
+from agent.hyper_utils import PoincarePlaneDistance, ClipNorm, apply_sn_until_instance, final_weight_init_hyp_small, apply_sn, PoincareDist
 from radam import RiemannianAdam
 
 class RND(nn.Module):
@@ -67,6 +67,8 @@ class RND(nn.Module):
         self.predictor = nn.Sequential(*self.predictor)
         self.target = nn.Sequential(*self.target)
 
+        self.hyper_dist = PoincareDist(c=1, euclidean_inputs=False)
+
         for param in self.target.parameters():
             param.requires_grad = False
 
@@ -75,8 +77,11 @@ class RND(nn.Module):
         obs = self.normalize_obs(obs)
         obs = torch.clamp(obs, -self.clip_val, self.clip_val)
         prediction, target = self.predictor(obs), self.target(obs)
-        prediction_error = torch.square(target.detach() - prediction).mean(
-            dim=-1, keepdim=True)
+        ## Use hyper distance instead of euclidean
+        # prediction_error = torch.square(target.detach() - prediction).mean(
+        #     dim=-1, keepdim=True)
+        dist = self.hyper_dist.distance(target.detach(), prediction)
+        prediction_error = torch.square(dist).mean(dim=-1, keepdim=True)
         return prediction_error
 
 

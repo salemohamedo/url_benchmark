@@ -286,14 +286,17 @@ class PBE(object):
         self.knn_clip = knn_clip
         self.device = device
 
-    def __call__(self, rep):
+    def __call__(self, rep, hyper_dist_fn=None):
         source = target = rep
         b1, b2 = source.size(0), target.size(0)
         # (b1, 1, c) - (1, b2, c) -> (b1, 1, c) - (1, b2, c) -> (b1, b2, c) -> (b1, b2)
-        sim_matrix = torch.norm(source[:, None, :].view(b1, 1, -1) -
-                                target[None, :, :].view(1, b2, -1),
-                                dim=-1,
-                                p=2)
+        if hyper_dist_fn:
+            sim_matrix = hyper_dist_fn(source)
+        else:
+            sim_matrix = torch.norm(source[:, None, :].view(b1, 1, -1) -
+                                    target[None, :, :].view(1, b2, -1),
+                                    dim=-1,
+                                    p=2)
         reward, _ = sim_matrix.topk(self.knn_k,
                                     dim=1,
                                     largest=False,
