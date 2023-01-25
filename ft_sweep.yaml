@@ -8,7 +8,7 @@ command:
 method: grid
 parameters:
   agent:
-    values: [hyper_icm_apt] #[rnd, hyper_rnd, icm_apt, hyper_icm_apt, hyper_ddpg_rnd]
+    values: [hyper_icm_apt, hyper_dist_icm_apt] #[rnd, hyper_rnd, icm_apt, hyper_icm_apt, hyper_ddpg_rnd]
   task:
     values: [walker_stand, walker_walk, walker_run, walker_flip, jaco_reach_top_left, jaco_reach_top_right, jaco_reach_bottom_left, jaco_reach_bottom_right, quadruped_walk, quadruped_run, quadruped_stand, quadruped_jump]
   snapshot_ts:

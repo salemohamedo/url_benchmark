@@ -8,7 +8,7 @@ command:
 method: grid
 parameters:
   agent:
-    values: [hyper_icm_apt] #[rnd, hyper_rnd, icm_apt, hyper_icm_apt, hyper_ddpg_rnd]
+    values: [hyper_dist_rnd, hyper_rnd, hyper_ddpg_rnd]
   domain:
     values: [walker, jaco, quadruped] 
   obs_type:

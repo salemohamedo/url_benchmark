@@ -7,6 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 import utils
+import geoopt
 from agent.ddpg import DDPGAgent
 from agent.hyper_utils import PoincarePlaneDistance, ClipNorm, apply_sn_until_instance, final_weight_init_hyp_small, PoincareDist
 from radam import RiemannianAdam
@@ -67,7 +68,7 @@ class RND(nn.Module):
         self.predictor = nn.Sequential(*self.predictor)
         self.target = nn.Sequential(*self.target)
 
-        self.hyper_dist = PoincareDist(c=1, euclidean_inputs=False)
+        self.hyper_ball = geoopt.PoincareBall(c=1)
 
         for param in self.target.parameters():
             param.requires_grad = False
@@ -80,8 +81,7 @@ class RND(nn.Module):
         # prediction_error = torch.square(target.detach() - prediction).mean(
         #     dim=-1, keepdim=True)
         ## Use hyperdistance
-        dist = self.hyper_dist.distance(target.detach(), prediction)
-        prediction_error = torch.square(dist).mean(dim=-1, keepdim=True)
+        prediction_error = self.hyper_ball.dist2(target.detach(), prediction)[:,None]
         return prediction_error
 
 

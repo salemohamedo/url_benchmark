@@ -1,5 +1,5 @@
 defaults:
-  - agent: hyper_dist_icm_apt
+  - agent: hyper_dist_rnd
   - override hydra/launcher: submitit_local
 
 # mode
@@ -19,7 +19,7 @@ num_eval_episodes: 10
 # snapshot
 snapshots: [100000, 500000, 1000000, 2000000]
 # snapshots: [100000, 500000, 1000000, 2000000]
-snapshot_dir: ../../../models/${obs_type}/${domain}/${agent.name}/${seed}
+snapshot_dir: /network/scratch/o/omar.salemohamed/models/${obs_type}/${domain}/${agent.name}/${seed}
 # replay buffer
 replay_buffer_size: 1000000
 replay_buffer_num_workers: 4

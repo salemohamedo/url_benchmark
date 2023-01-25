@@ -9,7 +9,7 @@ import torch.nn.functional as F
 import utils
 from agent.ddpg import DDPGAgent
 from agent.hyper_utils import PoincareDist
-
+import geoopt
 
 class RND(nn.Module):
     def __init__(self,
@@ -41,23 +41,26 @@ class RND(nn.Module):
                                     nn.ReLU(),
                                     nn.Linear(hidden_dim, rnd_rep_dim))
 
-        self.hyper_dist = PoincareDist(c=1, euclidean_inputs=True)
+        self.hyper_ball = geoopt.PoincareBall(c=1)
 
         for param in self.target.parameters():
             param.requires_grad = False
 
         self.apply(utils.weight_init)
-
+    
+    def dist(self, x, y):
+        x, y = self.hyper_ball.expmap0(x), self.hyper_ball.expmap0(y)
+        return self.hyper_ball.dist2(x, y)
+    
     def forward(self, obs):
         obs = self.aug(obs)
         obs = self.normalize_obs(obs)
         obs = torch.clamp(obs, -self.clip_val, self.clip_val)
         prediction, target = self.predictor(obs), self.target(obs)
+        ## Use hyperdistance
         # prediction_error = torch.square(target.detach() - prediction).mean(
         #     dim=-1, keepdim=True)
-        ## Use hyperdistance
-        dist = self.hyper_dist.distance(target.detach(), prediction)
-        prediction_error = torch.square(dist).mean(dim=-1, keepdim=True)
+        prediction_error = self.dist(target.detach(), prediction)[:,None]
         return prediction_error
 
 
