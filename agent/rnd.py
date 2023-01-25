@@ -52,7 +52,6 @@ class RND(nn.Module):
         prediction, target = self.predictor(obs), self.target(obs)
         prediction_error = torch.square(target.detach() - prediction).mean(
             dim=-1, keepdim=True)
-        print(prediction_error.shape)
         return prediction_error
 
 

@@ -8,9 +8,9 @@ command:
 method: grid
 parameters:
   agent:
-    values: [hyper_dist_rnd, hyper_rnd, hyper_ddpg_rnd]
+    values: [rnd, icm_apt]
   domain:
-    values: [walker, jaco, quadruped] 
+    values: [jaco, quadruped] 
   obs_type:
     value: pixels
   action_repeat:
@@ -20,6 +20,6 @@ parameters:
   num_train_frames:
     value: 100010
   seed:
-    values: [1, 2, 3]
+    values: [3]
   save_video:
     value: false

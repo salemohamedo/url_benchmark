@@ -257,7 +257,6 @@ def main(cfg):
     if snapshot.exists():
         print(f'resuming: {snapshot}')
         workspace.load_snapshot()
-    torch.autograd.set_detect_anomaly(True)
     workspace.train()
 
 

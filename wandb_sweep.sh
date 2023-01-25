@@ -18,4 +18,4 @@ unset CUDA_VISIBLE_DEVICES
 
 # wandb agent omar-s/url_benchmark/8osmn1tn
 # wandb agent omar-s/url_benchmark/dpxxw2mx
-wandb agent omar-s/url_benchmark/717uodlt
+wandb agent omar-s/url_benchmark/af0e8sva
